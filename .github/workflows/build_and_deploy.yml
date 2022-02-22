@@ -16,13 +16,18 @@ jobs:
     name: Build and Deploy
     strategy:
       matrix:
-        os: [windows-latest, macos-latest]
-        python-version: ['3.6', '3.7', '3.8', '3.9']
+        os: [windows-latest, macos-10.15]
+        python-version: ['3.7', '3.8', '3.9', '3.10']
         architecture: ['x86', 'x64']
         exclude:
           # Don't build 32-bit on Mac
-          - os: macos-latest
+          - os: macos-10.15
             architecture: x86
+
+          # Numpy does not build for 32-bit windows starting with Python 3.10, so we also have to exclude it
+          - os: windows-latest
+            architecture: x86
+            python-version: 3.10
     defaults:
       run:
         shell: bash
@@ -34,16 +39,6 @@ jobs:
       # It is actually checking out the most recent version on this branch
       - name: Checkout
         uses: actions/checkout@master
-
-      # Visual Studio 2019 (windows-latest) doesn't include these files for some reason??
-      # Even stranger, it really only affects Python 3.5, but we run it across all versions for consistency
-      # https://social.msdn.microsoft.com/Forums/vstudio/en-US/06675e6d-9a0b-46f5-8de0-10237fab1ece/link-error-lnk1158?forum=vcgeneral
-      - name: Fix Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          Copy-Item "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x86\rc.exe" -Destination "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN"
-          Copy-Item "C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x86\rcdll.dll" -Destination "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\BIN"
-        shell: powershell
 
       - name: Setting up Python
         uses: actions/setup-python@v2
@@ -69,14 +64,6 @@ jobs:
       - name: Updating pip
         run: python -m pip install --upgrade pip
 
-      # statsmodels throws a fit on Windows and Python 3.8 if we don't preinstall these
-      - name: Preinstalling Cython, numpy, and scipy (Windows only)
-        if: startsWith(runner.os, 'Windows')
-        run: |
-          pip install "$(cat build_tools/build_requirements.txt | grep cython)"
-          pip install "$(cat build_tools/build_requirements.txt | grep numpy)"
-          pip install "$(cat build_tools/build_requirements.txt | grep scipy)"
-
       - name: Installing requirements
         run: |
           pip install -r build_tools/build_requirements.txt
@@ -95,7 +82,7 @@ jobs:
 
       - name: Running unit tests
         run: |
-          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          if [ "${{ matrix.os }}" == "macos-10.15" ]; then
             export PMD_MPL_BACKEND=TkAgg
           fi
           pytest --showlocals --durations=20 --pyargs pmdarima --benchmark-skip
@@ -103,7 +90,7 @@ jobs:
       - name: Checking for numpy regression
         run: |
           pip install --upgrade numpy
-          if [ "${{ matrix.os }}" == "macos-latest" ]; then
+          if [ "${{ matrix.os }}" == "macos-10.15" ]; then
             export PMD_MPL_BACKEND=TkAgg
           fi
           pytest --showlocals --durations=20 --pyargs pmdarima --benchmark-skip
@@ -121,8 +108,7 @@ jobs:
       - name: Ensuring sdist SOURCES.txt has no absolute paths
         run: |
           cd dist
-          TAR_FILE=$(find . -name "*.tar.gz")
-          tar xzf $TAR_FILE
+          tar xzf $(find . -name "*.tar.gz")
           OUTPUT_DIRECTORY=$(find . -type d -name "pmdarima-*")
           if grep -q "^/" ${OUTPUT_DIRECTORY}/pmdarima.egg-info/SOURCES.txt; then
             echo "SOURCES.txt contains absolute paths in sdist"

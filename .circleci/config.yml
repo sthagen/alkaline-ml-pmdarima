@@ -94,7 +94,7 @@ jobs:
   # larger unit tests, and to avoid multiple setup steps that can slow the pipeline down
   test-sanity:
     docker:
-      - image: python:3.6
+      - image: python:3.7
     working_directory: ~/pmdarima
     steps:
     - checkout
@@ -132,15 +132,6 @@ jobs:
   # --- Unit tests ---
   # These are all executed on `machine` executors, since they require DinD to build the whl
   # files and perform the whl repair for manylinux support.
-  test-unit-cpython36:
-    machine:
-      image: circleci/classic:latest
-    working_directory: ~/pmdarima
-    steps:
-      - checkout
-      - build-test-and-persist:
-          pythonversion: "3.6"
-
   test-unit-cpython37:
     machine:
       image: circleci/classic:latest
@@ -167,6 +158,15 @@ jobs:
       - checkout
       - build-test-and-persist:
           pythonversion: "3.9"
+
+  test-unit-cpython310:
+    machine:
+      image: circleci/classic:latest
+    working_directory: ~/pmdarima
+    steps:
+      - checkout
+      - build-test-and-persist:
+          pythonversion: "3.10"
   # --- /Unit tests ---
 
   build-doc:
@@ -201,16 +201,6 @@ jobs:
   #
   # ############################################
 
-  deploy-cpython36-whl:
-    machine:
-      image: circleci/classic:latest
-    working_directory: ~/pmdarima
-    steps:
-      - checkout
-      - restore-whl-file:
-          key: "3.6"
-      - deploy-to-pypi
-
   deploy-cpython37-whl:
     machine:
       image: circleci/classic:latest
@@ -241,6 +231,16 @@ jobs:
           key: "3.9"
       - deploy-to-pypi
 
+  deploy-cpython310-whl:
+    machine:
+      image: circleci/classic:latest
+    working_directory: ~/pmdarima
+    steps:
+      - checkout
+      - restore-whl-file:
+          key: "3.10"
+      - deploy-to-pypi
+
   # For documentation deployment. You'll need the following environment vars
   # in your Circle CI settings, otherwise this will not work.
   #
@@ -249,7 +249,7 @@ jobs:
   # GH_TOKEN (the personal Git token with pushes enabled)
   deploy-doc:
     docker:
-      - image: python:3.6
+      - image: python:3.7
     working_directory: ~/pmdarima
     steps:
       - checkout
@@ -268,23 +268,23 @@ workflows:
         # run on test and tag
         - test-sanity:
             filters: *test-filters
-        - test-unit-cpython36:
-            filters: *test-filters
         - test-unit-cpython37:
             filters: *test-filters
         - test-unit-cpython38:
             filters: *test-filters
         - test-unit-cpython39:
             filters: *test-filters
+        - test-unit-cpython310:
+            filters: *test-filters
         - build-doc:
             filters: *test-filters
         - testing-passed:
             requires:
                 - test-sanity
-                - test-unit-cpython36
                 - test-unit-cpython37
                 - test-unit-cpython38
                 - test-unit-cpython39
+                - test-unit-cpython310
                 - build-doc
             filters: *test-filters
 
@@ -294,11 +294,6 @@ workflows:
                 - build-doc
                 - testing-passed
             filters: *test-filters
-
-        - deploy-cpython36-whl:
-            filters: *deploy-filters
-            requires:
-                - deploy-doc
 
         - deploy-cpython37-whl:
             filters: *deploy-filters
@@ -311,6 +306,11 @@ workflows:
               - deploy-doc
 
         - deploy-cpython39-whl:
+            filters: *deploy-filters
+            requires:
+              - deploy-doc
+
+        - deploy-cpython310-whl:
             filters: *deploy-filters
             requires:
               - deploy-doc
