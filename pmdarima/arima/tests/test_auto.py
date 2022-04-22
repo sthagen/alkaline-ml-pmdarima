@@ -83,7 +83,7 @@ def test_corner_cases():
                              return_valid_fits=True)
         assert hasattr(fits, '__iter__')
 
-    # show we fail for n_iter < 0
+    # show we fail for n_fits < 0
     with pytest.raises(ValueError):
         pm.auto_arima(np.ones(10), random=True, n_fits=-1)
 
@@ -98,12 +98,6 @@ def test_deprecation_warnings():
         kwargs = auto._warn_for_deprecations(**kwargs)
     assert kwargs['method']
     assert 'transparams' not in kwargs
-    assert we
-
-
-def test_deprecation_warnings_on_class():
-    with pytest.warns(DeprecationWarning) as we:
-        auto.AutoARIMA(sarimax_kwargs={"simple_differencing": True})
     assert we
 
 

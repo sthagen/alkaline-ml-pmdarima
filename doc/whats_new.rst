@@ -7,6 +7,27 @@ What's new in pmdarima
 As new releases of pmdarima are pushed out, the following list (introduced in
 v0.8.1) will document the latest features.
 
+`v2.0.0 <http://alkaline-ml.com/pmdarima/2.0.0>`_
+-------------------------------------------------
+
+* Potentially breaking changes:
+
+  - Use of the ``exogenous`` keyword (deprecated in 1.8.0) will now raise a ``TypeError``
+
+  - Use of the ``sarimax_kwargs`` keyword (deprecated in 1.5.1) will now raise a ``TypeError``
+
+  - A falsey value for ARIMA's ``method`` argument (deprecated pre-1.5.0) will now raise a ``ValueError``
+
+  - A falsey value for ARIMA's ``maxiter`` argument will now raise a ``ValueError`` (warning since 1.5.0)
+
+  - ``pmdarima`` is no longer built for 32-bit architectures
+
+* Bump numpy dependency to >= 1.21
+
+* Expose ``fittedvalues`` in the public API. See `#493 <https://github.com/alkaline-ml/pmdarima/issues/493>`_
+
+* Add support for ARM64 architecture. See `#434 <https://github.com/alkaline-ml/pmdarima/issues/434>`_
+
 `v1.8.5 <http://alkaline-ml.com/pmdarima/1.8.5>`_
 -------------------------------------------------
 

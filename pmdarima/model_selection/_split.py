@@ -7,8 +7,6 @@ from sklearn.base import BaseEstimator
 from sklearn.utils.validation import indexable
 from sklearn.model_selection import train_test_split as tts
 
-from ..compat import pmdarima as pm_compat
-
 __all__ = [
     'check_cv',
     'train_test_split',
@@ -91,7 +89,7 @@ class BaseTSCrossValidator(BaseEstimator, metaclass=abc.ABCMeta):
         """The forecast horizon for the cross-validator"""
         return self.h
 
-    def split(self, y, X=None, **kwargs):  # TODO: remove kwargs
+    def split(self, y, X=None):
         """Generate indices to split data into training and test sets
 
         Parameters
@@ -110,9 +108,6 @@ class BaseTSCrossValidator(BaseEstimator, metaclass=abc.ABCMeta):
         test : np.ndarray
             The test set indices for the split
         """
-        # Temporary shim until we remove `exogenous` support completely
-        X, _ = pm_compat.get_X(X, **kwargs)
-
         y, X = indexable(y, X)
         indices = np.arange(y.shape[0])
         for train_index, test_index in self._iter_train_test_masks(y, X):
@@ -123,8 +118,8 @@ class BaseTSCrossValidator(BaseEstimator, metaclass=abc.ABCMeta):
     def _iter_train_test_masks(self, y, X):
         """Generate boolean masks corresponding to test sets"""
         for train_index, test_index in self._iter_train_test_indices(y, X):
-            train_mask = np.zeros(y.shape[0], dtype=np.bool)
-            test_mask = np.zeros(y.shape[0], dtype=np.bool)
+            train_mask = np.zeros(y.shape[0], dtype=bool)
+            test_mask = np.zeros(y.shape[0], dtype=bool)
 
             train_mask[train_index] = True
             test_mask[test_index] = True
