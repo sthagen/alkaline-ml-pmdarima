@@ -9,10 +9,15 @@ function build_wheel {
 
     # https://www.python.org/dev/peps/pep-0513/#ucs-2-vs-ucs-4-builds
     ucs_tag=""
-    if [ "$pyver" = "3.7" ]; then
-        ucs_tag="m"
-    elif [ "$ucs_setting" = "ucs4" ]; then
+    if [ "$ucs_setting" = "ucs4" ]; then
         ucs_tag="${ucs_tag}u"
+    fi
+
+    distutils_version=""
+    if [ "$pyver" = "3.12" ]; then
+      distutils_version="local"
+    else
+      distutils_version="stdlib"
     fi
 
     ML_PYTHON_VERSION=$(python -c \
@@ -33,6 +38,7 @@ function build_wheel {
         -v `pwd`:/io \
         -e "PYTHON_VERSION=${ML_PYTHON_VERSION}" \
         -e "PMDARIMA_VERSION=${PMDARIMA_VERSION}" \
+        -e "SETUPTOOLS_USE_DISTUTILS=${distutils_version}" \
         "${ML_IMAGE}" "/io/build_tools/circle/dind/build_manylinux_wheel.sh"
     sudo docker cp "${DOCKER_CONTAINER_NAME}:/io/dist/." "${_root}/dist/"
     docker rm $(docker ps -a -f status=exited -q)

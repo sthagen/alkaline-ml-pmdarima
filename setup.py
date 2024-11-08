@@ -20,8 +20,8 @@ import importlib
 import builtins
 
 # Minimum allowed version
-MIN_PYTHON = (3, 7)
 IS_PYTHON_312 = sys.version_info[0] == 3 and sys.version_info[1] >= 12
+MIN_PYTHON = (3, 9)
 
 # Hacky (!!), adopted from sklearn. This sets a global variable
 # so pmdarima __init__ can detect if it's being loaded in the setup
@@ -239,8 +239,6 @@ def do_setup():
                         'Operating System :: Unix',
                         'Operating System :: MacOS',
                         'Programming Language :: Python :: 3',
-                        'Programming Language :: Python :: 3.7',
-                        'Programming Language :: Python :: 3.8',
                         'Programming Language :: Python :: 3.9',
                         'Programming Language :: Python :: 3.10',
                         'Programming Language :: Python :: 3.11',
@@ -322,6 +320,9 @@ def do_setup():
         if 'sdist' in sys.argv or IS_PYTHON_312:
             from setuptools import setup
             print("Setting up with setuptools")
+
+            # Needs to be unset when building sdist
+            os.environ.pop("SETUPTOOLS_USE_DISTUTILS", None)
 
             # TODO: distutils is removed in Python 3.12+, so this should probably be the default
             if IS_PYTHON_312:
